@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>计划清单</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    .input-group input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+      outline: none;
+    }
+    .input-group .btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f9f9f9;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    li:hover {
+      background: #ececec;
+    }
+    li input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    li span {
+      flex: 1;
+      font-size: 16px;
+    }
+    li.completed span {
+      text-decoration: line-through;
+      color: #888;
+    }
+    li button {
+      background: none;
+      border: none;
+      color: #5563DE;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+      transition: color 0.3s;
+    }
+    li button:hover {
+      color: #4652b4;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html">时钟</a>
+      <a href="pomodoro.html">番茄钟</a>
+      <a href="checklist.html">计划清单</a>
+      <a href="memo.html">备忘录</a>
+      <a href="diary.html">日记</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>计划清单</h1>
+    <div class="input-group">
+      <input type="text" id="newTask" placeholder="输入新任务">
+      <button class="btn" id="addTaskBtn">添加</button>
+    </div>
+    <ul id="taskList"></ul>
+    <button class="btn btn-danger" id="clearCompleted">清除已完成任务</button>
+  </div>
+  <script>
+    class Checklist {
+      constructor() {
+        this.elements = {
+          newTask: document.getElementById('newTask'),
+          addTaskBtn: document.getElementById('addTaskBtn'),
+          taskList: document.getElementById('taskList'),
+          clearCompleted: document.getElementById('clearCompleted')
+        };
+        this.bindEvents();
+      }
+
+      addTask(text) {
+        const li = document.createElement('li');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.addEventListener('change', () => li.classList.toggle('completed', checkbox.checked));
+        li.appendChild(checkbox);
+
+        const span = document.createElement('span');
+        span.textContent = text;
+        li.appendChild(span);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '编辑';
+        editBtn.addEventListener('click', () => this.editTask(li, span, editBtn));
+        li.appendChild(editBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '删除';
+        deleteBtn.addEventListener('click', () => li.remove());
+        li.appendChild(deleteBtn);
+
+        this.elements.taskList.appendChild(li);
+      }
+
+      editTask(li, span, editBtn) {
+        if (editBtn.textContent === '编辑') {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = span.textContent;
+          input.style.flex = '1';
+          li.replaceChild(input, span);
+          editBtn.textContent = '保存';
+        } else {
+          const input = li.querySelector('input[type="text"]');
+          if (input.value.trim()) {
+            span.textContent = input.value;
+            li.replaceChild(span, input);
+            editBtn.textContent = '编辑';
+          }
+        }
+      }
+
+      bindEvents() {
+        this.elements.addTaskBtn.addEventListener('click', () => {
+          const text = this.elements.newTask.value.trim();
+          if (text) {
+            this.addTask(text);
+            this.elements.newTask.value = '';
+          }
+        });
+        this.elements.newTask.addEventListener('keypress', e => {
+          if (e.key === 'Enter') this.elements.addTaskBtn.click();
+        });
+        this.elements.clearCompleted.addEventListener('click', () => {
+          Array.from(this.elements.taskList.children).forEach(task => {
+            if (task.querySelector('input[type="checkbox"]').checked) task.remove();
+          });
+        });
+      }
+    }
+
+    new Checklist();
+  </script>
+</body>
+</html>

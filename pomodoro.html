@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>番茄钟</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .timer {
+      font-size: 64px;
+      text-align: center;
+      margin: 20px 0;
+      color: #333;
+    }
+    .btn-group {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .session-info, .settings {
+      text-align: center;
+      margin: 25px 0;
+      font-size: 16px;
+    }
+    .settings label {
+      margin: 0 10px;
+      font-weight: 600;
+    }
+    .settings input {
+      width: 50px;
+      padding: 5px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-left: 5px;
+    }
+    @media (max-width: 640px) {
+      .timer {
+        font-size: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="index.html">时钟</a>
+      <a href="pomodoro.html">番茄钟</a>
+      <a href="checklist.html">计划清单</a>
+      <a href="memo.html">备忘录</a>
+      <a href="diary.html">日记</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>番茄钟</h1>
+    <div class="timer" id="timerDisplay">25:00</div>
+    <div class="btn-group">
+      <button class="btn" id="startBtn">开始</button>
+      <button class="btn" id="pauseBtn">暂停</button>
+      <button class="btn" id="resetBtn">重置</button>
+    </div>
+    <div class="session-info">
+      <p>当前模式：<span id="modeLabel">工作</span></p>
+      <p>已完成工作会话：<span id="sessionCount">0</span></p>
+    </div>
+    <div class="settings">
+      <label>工作时间(分钟): <input type="number" id="workTime" value="25" min="1"></label>
+      <label>短休时间(分钟): <input type="number" id="shortBreak" value="5" min="1"></label>
+      <label>长休时间(分钟): <input type="number" id="longBreak" value="15" min="1"></label>
+    </div>
+  </div>
+  <audio id="alarmSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+  <script>
+    class Pomodoro {
+      constructor() {
+        this.elements = {
+          timerDisplay: document.getElementById('timerDisplay'),
+          startBtn: document.getElementById('startBtn'),
+          pauseBtn: document.getElementById('pauseBtn'),
+          resetBtn: document.getElementById('resetBtn'),
+          modeLabel: document.getElementById('modeLabel'),
+          sessionCount: document.getElementById('sessionCount'),
+          workTime: document.getElementById('workTime'),
+          shortBreak: document.getElementById('shortBreak'),
+          longBreak: document.getElementById('longBreak'),
+          alarmSound: document.getElementById('alarmSound')
+        };
+        this.timerInterval = null;
+        this.mode = 'work';
+        this.sessionCount = 0;
+        this.totalTime = parseInt(this.elements.workTime.value) * 60;
+        this.remainingTime = this.totalTime;
+        this.bindEvents();
+        this.updateDisplay();
+      }
+
+      updateDisplay() {
+        const minutes = Math.floor(this.remainingTime / 60).toString().padStart(2, '0');
+        const seconds = (this.remainingTime % 60).toString().padStart(2, '0');
+        this.elements.timerDisplay.textContent = `${minutes}:${seconds}`;
+      }
+
+      switchMode() {
+        if (this.mode === 'work') {
+          this.sessionCount++;
+          this.elements.sessionCount.textContent = this.sessionCount;
+          this.mode = this.sessionCount % 4 === 0 ? 'longBreak' : 'shortBreak';
+          this.totalTime = parseInt(this.elements[this.mode === 'longBreak' ? 'longBreak' : 'shortBreak'].value) * 60;
+        } else {
+          this.mode = 'work';
+          this.totalTime = parseInt(this.elements.workTime.value) * 60;
+        }
+        this.remainingTime = this.totalTime;
+        this.elements.modeLabel.textContent = this.mode === 'work' ? '工作' : (this.mode === 'shortBreak' ? '短休' : '长休');
+        this.updateDisplay();
+      }
+
+      startTimer() {
+        if (!this.timerInterval) {
+          this.timerInterval = setInterval(() => {
+            if (this.remainingTime > 0) {
+              this.remainingTime--;
+              this.updateDisplay();
+            } else {
+              clearInterval(this.timerInterval);
+              this.timerInterval = null;
+              this.elements.alarmSound.play();
+              alert(`时间到！${this.mode === 'work' ? '休息一下吧！' : '准备工作！'}`);
+              this.switchMode();
+            }
+          }, 1000);
+        }
+      }
+
+      pauseTimer() {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+
+      resetTimer() {
+        this.pauseTimer();
+        this.totalTime = parseInt(this.elements[this.mode === 'work' ? 'workTime' : this.mode === 'shortBreak' ? 'shortBreak' : 'longBreak'].value) * 60;
+        this.remainingTime = this.totalTime;
+        this.updateDisplay();
+      }
+
+      bindEvents() {
+        this.elements.startBtn.addEventListener('click', () => this.startTimer());
+        this.elements.pauseBtn.addEventListener('click', () => this.pauseTimer());
+        this.elements.resetBtn.addEventListener('click', () => this.resetTimer());
+        ['workTime', 'shortBreak', 'longBreak'].forEach(input => {
+          this.elements[input].addEventListener('change', () => {
+            if (this.mode === input.replace('Time', '') && !this.timerInterval) {
+              this.totalTime = parseInt(this.elements[input].value) * 60;
+              this.remainingTime = this.totalTime;
+              this.updateDisplay();
+            }
+          });
+        });
+      }
+    }
+
+    new Pomodoro();
+  </script>
+</body>
+</html>
